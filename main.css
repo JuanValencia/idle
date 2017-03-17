@@ -12,7 +12,7 @@ header {
     text-align: center;
 }
 
-div {
+#messages {
     border-bottom: 1px solid #ddd;
     border-right: 1px solid #ddd;
     border-top: 1px solid black;
@@ -33,4 +33,14 @@ footer {
 
 .inactive {
     border: none;
+}
+
+.msg0 { color:#fff }
+.msg1 { color:#ccc }
+.msg2 { color:#999 }
+.msg3 { color:#666 }
+.msg4 { color:#333 }
+
+.btn {
+    margin: 3px;
 }
