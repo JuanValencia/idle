@@ -1,14 +1,9 @@
 class game {
     constructor() {
         this.setupState();
-        //this.state.gametime = 0;
-        this.resourcesButtons = {};
-        this.resourcesButtons["BerryBush"] = new ResourceButton(this, "Berry Bush");
+        this.setupResources();
         setInterval(()=>{
-            $("footer span").html(this.formatTime())
-            let results = this.state.ticks.map((tick)=>{tick ? tick() : null});
-            this.save();
-            this.show();
+            this.tick();
         }, 200)
     }
 
@@ -23,10 +18,28 @@ class game {
             this.state = {
                 gametime: 0,
                 ticks:[],
-                resources: {}
+                resources: {},
+                stats: {}
             }
         }
-        this.msgs = new Messages("You're starving!", "All you can find is a berry bush...");
+        this.msgs = new Messages("You're starving!", "All that's left is a berry bush and some rocks...");
+    }
+
+    setupResources() {        
+        this.resourcesButtons = [];
+        this.resourcesButtons.push(new ResourceButton(this, "berries", "Pick Berries"));
+        this.resourcesButtons.push(new ResourceButton(this, "rocks", "Gather Rocks"));
+    }
+
+    updateFooter() {
+        $("footer span").html(this.updateTime());
+    }
+
+    tick() {
+        this.updateFooter();
+        this.state.ticks.map((tick)=>{tick ? tick() : null});
+        this.updateSelf();
+        this.save();
     }
 
     save() {
@@ -35,22 +48,15 @@ class game {
         }
     }
 
-    show() {
-        Object.keys(this.state.resources).map(this.showResources);
-    }
-
-    showResources(resource) {
-        let el = document.getElementById(resource);
-        if (el == null) {
-            $(".self").append($("<span id='" + resource + "'></span>"));
-        }
+    updateSelf() {
+        Object.keys(this.state.resources).map(this.showResources.bind(this));
     }
 
     registerTick(tick) {
         this.state.ticks.push(tick);
     }
 
-    formatTime() {
+    updateTime() {
         this.state.gametime += 1;
         let secs = this.state.gametime / 5
         let sec = Math.floor(secs % 60);
@@ -60,39 +66,42 @@ class game {
         return "" + day + ":" + ("0" + hour).slice(-2) + ":" + ("0" + min).slice(-2) + ":" + ("0" + sec).slice(-2);
     }
 
-    addResource(type, count) {
-        this.state.resources[type] += count;
+    showResources(resource) {
+        let el = document.getElementById("resource-" + resource);
+        if (el == null) {
+            $("#self").append($("<span id='resource-" + resource + "'></span>"));
+            el = document.getElementById("resource-" + resource);
+        } 
+        $(el).html(resource + ":" + this.state.resources[resource])        
     }
 
     incrementResource(type, count) {
         if(!this.state.resources[type]) {
             this.state.resources[type] = count;
+            this.state.stats[type + "Count"] = count;
         } else {
             this.state.resources[type] += count;
+            this.state.stats[type + "Count"] += count;
         }
     }
 }
 
 class ResourceButton {
-    constructor(game, type) {
+    constructor(game, type, text) {
         this.state = {
             game: game,
             type: type,
-            btn: this.create(type, game.state.resources[type])
+            text: text,
+            btn: this.create(type, text)
         }
     }
 
     click() {
         this.state.game.incrementResource(this.state.type, 1);
-        this.state.btn.html(this.state.type + ':' + this.state.game.state.resources[this.state.type])
     }
 
-    create(type, quantity) {
-        if (!quantity) {
-            quantity = 0;
-        }
-        let btn = $('<button type="button" class="btn btn-primary">'
-          + type + ':' + quantity +'</button>');
+    create(type, text) {
+        let btn = $('<div class="resource">' + text + '</div>');
         btn.click((event)=>{this.click()})
         $("#resources").append(btn);
         return btn;
@@ -117,7 +126,6 @@ class Messages {
         this.redraw()
     }
     redraw() {
-        console.log(this.state.msgs);
         $("#messages").empty();
         for (let i = 0; i < 5; i++) {
             let newInd = this.state.index - i;
