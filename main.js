@@ -2,6 +2,7 @@ class game {
     constructor() {
         this.setupState();
         this.setupResources();
+        this.setupSelf(this.state.self);
         setInterval(()=>{
             this.tick();
         }, 200)
@@ -19,16 +20,22 @@ class game {
                 gametime: 0,
                 ticks:[],
                 resources: {},
+                self: {},
                 stats: {}
             }
         }
-        this.msgs = new Messages("You're starving!", "All that's left is a berry bush and some rocks...");
+        this.msgs = new Messages("You're starving!", "The world ended, and all that's left is a berry bush and some rocks...");
     }
 
     setupResources() {        
-        this.resourcesButtons = [];
-        this.resourcesButtons.push(new ResourceButton(this, "berries", "Pick Berries"));
-        this.resourcesButtons.push(new ResourceButton(this, "rocks", "Gather Rocks"));
+        this.resourceButtons = {};
+        new ResourceButton(this, "berries", "Pick Berries");
+        new ResourceButton(this, "rocks", "Gather Rocks");
+    }
+
+    setupSelf(saved) {
+        this.self = new Self(this, saved);
+        this.state.self = this.self.state;
     }
 
     updateFooter() {
@@ -38,7 +45,7 @@ class game {
     tick() {
         this.updateFooter();
         this.state.ticks.map((tick)=>{tick ? tick() : null});
-        this.updateSelf();
+        Object.keys(this.state.resources).map(this.showResources.bind(this));
         this.save();
     }
 
@@ -46,10 +53,9 @@ class game {
         if (this.state.gametime % 5 == 0) {
             localStorage.setItem("state", JSON.stringify(this.state))
         }
-    }
-
-    updateSelf() {
-        Object.keys(this.state.resources).map(this.showResources.bind(this));
+        if (this.state.gametime % 100 == 10) {
+            console.log(localStorage);
+        }
     }
 
     registerTick(tick) {
@@ -68,20 +74,63 @@ class game {
 
     showResources(resource) {
         let el = document.getElementById("resource-" + resource);
-        if (el == null) {
-            $("#self").append($("<span id='resource-" + resource + "'></span>"));
-            el = document.getElementById("resource-" + resource);
-        } 
-        $(el).html(resource + ":" + this.state.resources[resource])        
+        $(el).html(this.state.resources[resource])        
     }
 
     incrementResource(type, count) {
+        this.self.update(type, true);
         if(!this.state.resources[type]) {
             this.state.resources[type] = count;
             this.state.stats[type + "Count"] = count;
         } else {
             this.state.resources[type] += count;
             this.state.stats[type + "Count"] += count;
+        }
+    }
+}
+
+class Self {
+    constructor(game, saved) {
+        this.game = game;
+        this.default = {
+            health: 20,
+            hunger: 20,
+            thirst: 0,
+            memory: 0
+        }
+        this.actions = {
+            "berries": { hunger: 1 },
+            "rocks": { hunger: 2, thirst: 1 },
+            "eatberry": {hunger: -5 },
+            "starve": { health: -1 }
+        };
+        console.log(saved);
+        if (saved && saved.hunger) {
+            this.state = saved;
+        } else {
+            this.state = this.default
+        }
+    }
+    update(action, autoupdate) {
+        console.log("self did:" + action);
+        Object.keys(this.actions[action]).map((key) => {
+            this.state[key] += this.actions[action][key];
+        });
+        if (autoupdate) {
+            this.hunger();
+        }
+        console.log(this.state);
+    }
+    hunger() {
+        if (this.state.hunger >= 20) {
+            if (this.game.state.resources.berries && this.game.state.resources.berries > 0) {
+                this.update("eatberry", false);
+                this.game.state.resources.berries -= 1;
+                this.game.msgs.pushMessage("A Berry!", "You scarf it down in one gulp.");
+            } else {
+                this.game.msgs.pushMessage("Starving!", "Weakness shakes through you.");
+                this.update("starve", false)
+            }
         }
     }
 }
@@ -94,6 +143,7 @@ class ResourceButton {
             text: text,
             btn: this.create(type, text)
         }
+        game.resourceButtons[type] = this;
     }
 
     click() {
@@ -102,6 +152,7 @@ class ResourceButton {
 
     create(type, text) {
         let btn = $('<div class="resource">' + text + '</div>');
+        btn.append($("<br /><span id='resource-" + type + "' class='center'>0</span>"));
         btn.click((event)=>{this.click()})
         $("#resources").append(btn);
         return btn;
