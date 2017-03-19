@@ -10,6 +10,10 @@ body {
     user-select:none;
 }
 
+#debug pre {
+    font-size: .7em;
+}
+
 .header {
     border-bottom: 1px solid #ddd;
     font-size:1.3em;
