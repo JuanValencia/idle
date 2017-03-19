@@ -1,6 +1,6 @@
 defaultStats = {
     health: 20,
-    hunger: 20,
+    hunger: 10,
     memory: 0,
     thirst: 0,
     berries: 0,
@@ -8,7 +8,7 @@ defaultStats = {
     water: 0
 }
 
-currentStats = defaultStats
+currentStats = $.extend(true, {}, defaultStats)
 
 totalDefaultStats = {
     memory: 0,
@@ -17,7 +17,7 @@ totalDefaultStats = {
     water: 0
 }
 
-totalStats = totalDefaultStats
+totalStats = $.extend(true, {}, totalDefaultStats)
 
 msgs = {
     good: (msg)=>{msgs.add(msg, "green")},
@@ -26,34 +26,40 @@ msgs = {
     bad: (msg)=>{msgs.add(msg, "red")},
     add: (msg, color) => {
         $("#messages").prepend($(
-            "<div class='"+color+"'>"+ msg +"</div>"
+            "<div class='"+color+"'><span class='grey'>["+ gameTimeString +"]:</span> "+ msg +"</div>"
         ))
     }
 }
 
 function reset() {
-    currentStats = defaultStats
-    totalStats = totalDefaultStats
+    currentStats = $.extend(true, {}, defaultStats)
+    totalStats = $.extend(true, {}, totalDefaultStats)
     gameTime = 0
     save()
     location.reload();
 }
 
 function rebirth() {
-    currentStats = defaultStats
+    currentStats = $.extend(true, {}, defaultStats)
     currentStats.memory = totalStats.memory
+    Object.keys(currentStats).map((key)=>{
+        updateResource(key);
+    })
+    msgs.info("You died!  Your body reassembles itself and you remember your past lives...")
+    msgs.warn("All your stuff is gone!")
+    msgs.warn("You are really hungry!")
 }
 
 getEvents = {
     "berries": { 
         earnMessage: "<b>The world ended!</b> You're so hungry you can't remember anything.",
-        getMessage: ["You reach for berries... You got {}", "green"],
+        getMessage: "You reach for berries... You got {}",
         stateChange: [["hunger", 1]],
         text: "Pick Berries"
     },
     "rocks": { 
         earnMessage: "There's nothing but rocks about.",
-        getMessage: ["You look for rocks... You got {}", "green"],
+        getMessage: "You look for rocks... You got {}",
         stateChange: [["hunger", 2], ["thirst", 1]],
         text: "Gather Rocks"
     },
@@ -61,20 +67,21 @@ getEvents = {
 
 doEvents = {
     "eatberry": { 
-        doMessage: ["<b>So hungry!</b> A berry! NomNomNom.", "blue"],
-        cantMessage: ["<b>Alas!</b> There are no more berries!","yellow"],
-        stateChange: [["hunger", -5]]
+        doGoodMessage: "<b>Eating a berry!</b> NomNomNom.",
+        cantMessage: "<b>Alas!</b> There are no more berries!",
+        stateChange: [["berries", -1], ["hunger", -5]]
     },
     "starve": { 
-        doMessage: ["<b>The world ended!</b> You're so hungry you can't remember anything.", "blue"],
-        cantMessage: ["<b>You die</b> There is no more food!","red"],
-        stateChange: [["heath", -1]]
+        doBadMessage: "You're so hungry, you stagger.",
+        cantMessage: "<b>You die</b> There is no more food!",
+        stateChange: [["health", -1]]
     },
 }
 
 triggers = [
-    ()=>{ currentStats.health == 0 ? rebirth() : null },
-    ()=>{ currentStats.hunger >= 20 ? doEvent("starve") : null}
+    ()=>{ currentStats.hunger >= 20 ? doEvent("starve") : null},
+    ()=>{ currentStats.hunger >= 15 ? doEvent("eatberry") : null},
+    ()=>{ currentStats.health == 0 ? rebirth() : null }
 ]
 
 oneTimeTriggers =  [
@@ -91,20 +98,25 @@ function doOneTimeTriggers() {
 }
 
 function doTriggers() {
-
+    triggers.map((trigger)=>{ trigger() })
 }
 
 function addResource(type) {
     btn = $('<div class="resource">' + getEvents[type].text + '</div>');
     btn.append($("<br /><span id='resource-" + type + "' class='center'>" + currentStats[type] + "</span>"));
     btn.click((event)=>{ 
+        msgs.info(getEvents[type].getMessage.replace("{}", 1));
         incrementResource(type, 1);
-        el = document.getElementById("resource-" + type);
-        $(el).html(currentStats[type])  
+        updateResource(type); 
     })
     $("#resources").append(btn);
-    msgs.info(getEvents[type].earnMessage);
+    msgs.warn(getEvents[type].earnMessage);
     return true;
+}
+
+function updateResource(type) {
+    el = document.getElementById("resource-" + type);
+    $(el).html(currentStats[type]) 
 }
 
 function incrementResource(type, num) {
@@ -114,19 +126,30 @@ function incrementResource(type, num) {
     }
     getEvents[type].stateChange.map((change)=>{
         currentStats[change[0]] += change[1]
+        updateResource(change[0])
     })
 }
 
 function doEvent(type) {
-
+    success = true;
+    doEvents[type].stateChange.map((change)=>{
+        if(currentStats[change[0]] + change[1] < 0) { success = false }
+    })
+    if (success) {
+        doEvents[type].doGoodMessage ? msgs.good(doEvents[type].doGoodMessage) : msgs.bad(doEvents[type].doBadMessage)
+        doEvents[type].stateChange.map((change)=>{
+            currentStats[change[0]] += change[1]
+            updateResource(change[0])
+        })
+    }
 }
 
 gameTime = 1000000;
 gameTimeString = "0:00:00:00"
 function doTick() {
     updateGameTime()
+    gameTime % 10 == 0 ? doTriggers() : null
     doOneTimeTriggers()
-    doTriggers()
     gameTime % 10 == 0 ? save() : null
     $("#debug").html("<pre>" + JSON.stringify(currentStats, null, 2) + "</pre>")
     $("#debug").append("<pre>" + JSON.stringify(totalStats, null, 2) + "</pre>")
@@ -152,7 +175,9 @@ function save() {
 }
 
 function load() {
+    msgs.info("Game Loading...")
     if (localStorage.getItem("currentStats") == null) {return}
+    msgs.good("Welcome back!")
     currentStats = JSON.parse(localStorage.getItem("currentStats"))
     totalStats = JSON.parse(localStorage.getItem("totalStats"))
     gameTime = parseInt(localStorage.getItem("gameTime"))

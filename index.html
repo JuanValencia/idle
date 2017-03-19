@@ -8,17 +8,21 @@
 
 <body>
     <div class="header col-md-12">Journey Through Time</div>
-    <div id="game">
-        <div id="messages"></div>
-        <div id="self" class="gamearea col-md-12"><div class="label">Self</div></div>
-        <div id="resources" class="gamearea col-md-12"><div class="label">Resources</div></div>
+    <div id="game" class="col-md-12">
+        <div id="self" class="gamearea col-md-12">
+            <div class="label">Self</div>
+        </div>
+        <div id="resources" class="gamearea col-md-6"></div>
+        <div id="message-overlay" class="col-md-6">
+            <div id="messages"></div>
+        </div>
         <div id="beings" class="gamearea col-md-12"><div class="label">Fey</div></div>
         <div id="research" class="gamearea col-md-12"><div class="label">Research</div></div>
         <div id="perks" class="gamearea col-md-12"><div class="label">Perks</div></div>
         <div id="debug"></div>
     </div>
     <div class="footer col-md-12">Juan Valencia <span></span> <button id="reset" class="btn btn-danger">reset</button></div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="jquery.min.js"></script>
     <script src="bootstrap.min.js"></script>
     <script src="bootbox.min.js"></script>
     <script type="application/javascript" src="events.js"></script>

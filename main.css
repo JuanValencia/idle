@@ -30,34 +30,41 @@ body {
 }
 
 .gamearea {
-    border: 1px solid #ccc;
     height:32%;
     padding-left: 2px;
     padding-right: 2px;
 }
 
-#messages {
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
-    border-top: 1px solid black;
-    border-left: 1px solid black;
+#resources {
+    height: 150px;
+    padding: 0px;
+    border-right: 1px solid #ccc;
 }
+
+#message-overlay {
+    height: 150px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+    position: relative;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+#messages {
+    font-size: .8em;
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    z-index: -1;
+}
+
+#messages .green { color: limegreen}
+#messages .blue { color: cornflowerblue}
+#messages .yellow { color: yellow}
+#messages .red { color: orangered}
+#messages .grey { color: grey}
 
 #game {
     min-height: 90%;
-}
-
-.inactive {
-    border: none;
-}
-
-.msg0 { color:#fff }
-.msg1 { color:#ccc }
-.msg2 { color:#999 }
-.msg3 { color:#666 }
-.msg4 { color:#333 }
-
-#resources {
     padding: 0px;
 }
 
@@ -76,6 +83,10 @@ body {
     background: #222;
 }
 
+#self {
+    border-bottom: 1px solid #ccc;
+}
+
 #self span {
     display: inline-block;
     margin-right: 10px;
@@ -85,4 +96,8 @@ body {
     text-align: center;
     display:inline-block;
     width: 100%;
+}
+
+#beings {
+    border-top:  1px solid #ccc;
 }
