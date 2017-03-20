@@ -1,8 +1,8 @@
 defaultStats = {
     health: 20,
-    hunger: 10,
+    hunger: 15,
     memory: 0,
-    thirst: 0,
+    thirst: 5,
     berries: 0,
     rocks: 0,
     water: 0
@@ -12,6 +12,7 @@ currentStats = $.extend(true, {}, defaultStats)
 
 totalDefaultStats = {
     memory: 0,
+    thirst: 5,
     berries: 0,
     rocks: 0,
     water: 0
@@ -63,6 +64,12 @@ getEvents = {
         stateChange: [["hunger", 2], ["thirst", 1]],
         text: "Gather Rocks"
     },
+    "water": {
+        earnMessage: "You've got to find some water!  You pick up a jar that might be able to hold some.",
+        getMessage: "You search for water... you add {} handful to your jar.",
+        stateChange: [["hunger", 1],["thirst", 1]],
+        text: "Find Water"
+    }
 }
 
 doEvents = {
@@ -76,17 +83,29 @@ doEvents = {
         cantMessage: "<b>You die</b> There is no more food!",
         stateChange: [["health", -1]]
     },
+    "drinkwater": {
+        doGoodMessage: "<b>Drinking...</b> Refreshing!",
+        cantMessage: "Need to find some water quick",
+        stateChange: [["water", -1],["thirst", -5],["health", 1]]
+    },
+    "dehydrate": {
+        doBadMessage: "Dying of thirst!  You think you see your mother.",
+        stateChange: [["health", -3]]
+    }
 }
 
 triggers = [
     ()=>{ currentStats.hunger >= 20 ? doEvent("starve") : null},
     ()=>{ currentStats.hunger >= 15 ? doEvent("eatberry") : null},
+    ()=>{ currentStats.thirst >= 20 ? doEvent("dehydrate") : null},
+    ()=>{ currentStats.thirst >= 5 ? doEvent("drinkwater") : null},
     ()=>{ currentStats.health == 0 ? rebirth() : null }
 ]
 
 oneTimeTriggers =  [
     [false, ()=>{ return addResource("berries")}],
-    [false, ()=>{ return totalStats.berries >= 5 ? addResource("rocks") : false }]
+    [false, ()=>{ return totalStats.berries >= 5 ? addResource("rocks") : false }],
+    [false, ()=>{ return totalStats.thirst >= 15 ? addResource("water") : false }]
 ]
 
 function doOneTimeTriggers() {
@@ -110,6 +129,7 @@ function addResource(type) {
         updateResource(type); 
     })
     $("#resources").append(btn);
+    $("#self #stuff").append("<span><div class='ttip'>A " + type + " resource. Try to gain more.</div><i class='" + type + "'></i></span>")
     msgs.warn(getEvents[type].earnMessage);
     return true;
 }
@@ -127,6 +147,7 @@ function incrementResource(type, num) {
     getEvents[type].stateChange.map((change)=>{
         currentStats[change[0]] += change[1]
         updateResource(change[0])
+        totalStats[change[0]] != undefined ? totalStats[change[0]] += change[1] : null;
     })
 }
 
@@ -151,9 +172,14 @@ function doTick() {
     gameTime % 10 == 0 ? doTriggers() : null
     doOneTimeTriggers()
     gameTime % 10 == 0 ? save() : null
-    $("#debug").html("<pre>" + JSON.stringify(currentStats, null, 2) + "</pre>")
-    $("#debug").append("<pre>" + JSON.stringify(totalStats, null, 2) + "</pre>")
-    $("#debug").append("<div>" + gameTimeString + "</div>")
+    populateStats()
+}
+
+function populateStats() {
+    Object.keys(currentStats).map((key)=>{
+        $("#self i." + key).html(currentStats[key])
+    })
+    $("#debug").html("<pre>"+JSON.stringify(totalStats, null, 2)+"</pre>")
 }
 
 function updateGameTime() {

@@ -10,6 +10,7 @@ body {
     user-select:none;
 }
 
+#self i:before { font-size: .9em; padding-left: 2px; }
 #self .health:before { content: "\2665"; color: red; text-shadow: 0px 0px 3px yellow, 0px 0px 7px white}
 #self .hunger:before { content: "\1F356"; text-shadow: 0px 0px 3px white}
 #self .memory:before { content: "\1F4AD"; color: white; text-shadow: 0px 0px 2px black,0px 0px 7px white}
@@ -17,6 +18,18 @@ body {
 #self .berries:before { content: "\1F352"; color: lightblue; text-shadow: 0px 0px 5px dodgerblue, 0px 0px 7px white }
 #self .rocks:before { content: "\2BCA"; color: grey; text-shadow: 0px 0px 2px black,0px 0px 4px white}
 #self .water:before { content: "\1F4A7"; text-shadow: 0px 0px 2px black,0px 0px 7px white}
+
+#self span { position: relative; margin-right: 0px !important; }
+#self span:hover .ttip { visibility: visible }
+.ttip { 
+    visibility: hidden; 
+    position: absolute; 
+    top: 1.5em; 
+    width: 200px; 
+    background: #333; 
+    z-index: 10; 
+    padding: 5px; 
+    border: 1px solid #ccc}
 
 #debug pre {
     font-size: .7em;

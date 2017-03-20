@@ -10,11 +10,16 @@
     <div class="header col-md-12">Journey Through Time</div>
     <div id="game" class="col-md-12">
         <div id="self" class="gamearea col-md-12">
-            <i class="health"></i>
-            <i class="hunger"></i>
-            <i class="thirst"></i>
-            <i class="memory"></i> | 
-            <i class="berries"></i>
+            <div id="stats">
+                <label>Stats:</label>
+                <span><div class="ttip">Your health.  You die when it reaches 0.</div><i class="health"></i></span>
+                <span><div class="ttip">Your hunger.  Your health suffers when this is 20 or over.</div><i class="hunger"></i></span>
+                <span><div class="ttip">Your thirst.  Your health suffers when this is 20 or over.</div><i class="thirst"></i></span>
+                <span><div class="ttip">Your memory.  You have a hard time thinking straight.</div><i class="memory"></i></span>
+            </div>
+            <div id="stuff">
+                <label>Stuff:</label>
+            </div>
         </div>
         <div id="resources" class="gamearea col-md-6"></div>
         <div id="message-overlay" class="col-md-6">
@@ -32,4 +37,4 @@
     <script type="application/javascript" src="events.js"></script>
 </body>
 
-</html>
+</html>>
