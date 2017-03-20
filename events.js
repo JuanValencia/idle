@@ -1,56 +1,3 @@
-defaultStats = {
-    health: 20,
-    hunger: 15,
-    memory: 0,
-    thirst: 5,
-    berries: 0,
-    rocks: 0,
-    water: 0
-}
-
-currentStats = $.extend(true, {}, defaultStats)
-
-totalDefaultStats = {
-    memory: 0,
-    thirst: 5,
-    berries: 0,
-    rocks: 0,
-    water: 0
-}
-
-totalStats = $.extend(true, {}, totalDefaultStats)
-
-msgs = {
-    good: (msg)=>{msgs.add(msg, "green")},
-    info: (msg)=>{msgs.add(msg, "blue")},
-    warn: (msg)=>{msgs.add(msg, "yellow")},
-    bad: (msg)=>{msgs.add(msg, "red")},
-    add: (msg, color) => {
-        $("#messages").prepend($(
-            "<div class='"+color+"'><span class='grey'>["+ gameTimeString +"]:</span> "+ msg +"</div>"
-        ))
-    }
-}
-
-function reset() {
-    currentStats = $.extend(true, {}, defaultStats)
-    totalStats = $.extend(true, {}, totalDefaultStats)
-    gameTime = 0
-    save()
-    location.reload();
-}
-
-function rebirth() {
-    currentStats = $.extend(true, {}, defaultStats)
-    currentStats.memory = totalStats.memory
-    Object.keys(currentStats).map((key)=>{
-        updateResource(key);
-    })
-    msgs.info("You died!  Your body reassembles itself and you remember your past lives...")
-    msgs.warn("All your stuff is gone!")
-    msgs.warn("You are really hungry!")
-}
-
 getEvents = {
     "berries": { 
         earnMessage: "<b>The world ended!</b> You're so hungry you can't remember anything.",
@@ -102,53 +49,23 @@ triggers = [
     ()=>{ currentStats.health == 0 ? rebirth() : null }
 ]
 
-oneTimeTriggers =  [
-    [false, ()=>{ return addResource("berries")}],
-    [false, ()=>{ return totalStats.berries >= 5 ? addResource("rocks") : false }],
-    [false, ()=>{ return totalStats.thirst >= 15 ? addResource("water") : false }]
-]
+oneTimeTriggers =  {
+    "start": [false, ()=>{ return addResource("berries")}],
+    "rocks": [false, ()=>{ return totalStats.berries >= 5 ? addResource("rocks") : false }],
+    "water": [false, ()=>{ return totalStats.thirst >= 15 ? addResource("water") : false }],
+    "fairy": [false, ()=> { return currentStats.berries >= 10 && currentStats.water >= 10 ? addFey("fairy") : false }],
+}
 
 function doOneTimeTriggers() {
-    oneTimeTriggers.map((oneTimeTrigger)=>{
-        if (!oneTimeTrigger[0]) {
-            oneTimeTrigger[0] = oneTimeTrigger[1]()
+    Object.keys(oneTimeTriggers).map((key)=>{
+        if (!oneTimeTriggers[key][0]) {
+            oneTimeTriggers[key][0] = oneTimeTriggers[key][1]()
         }
     })
 }
 
 function doTriggers() {
     triggers.map((trigger)=>{ trigger() })
-}
-
-function addResource(type) {
-    btn = $('<div class="resource">' + getEvents[type].text + '</div>');
-    btn.append($("<br /><span id='resource-" + type + "' class='center'>" + currentStats[type] + "</span>"));
-    btn.click((event)=>{ 
-        msgs.info(getEvents[type].getMessage.replace("{}", 1));
-        incrementResource(type, 1);
-        updateResource(type); 
-    })
-    $("#resources").append(btn);
-    $("#self #stuff").append("<span><div class='ttip'>A " + type + " resource. Try to gain more.</div><i class='" + type + "'></i></span>")
-    msgs.warn(getEvents[type].earnMessage);
-    return true;
-}
-
-function updateResource(type) {
-    el = document.getElementById("resource-" + type);
-    $(el).html(currentStats[type]) 
-}
-
-function incrementResource(type, num) {
-    currentStats[type] += num;
-    if (num > 0) {
-        totalStats[type] += num
-    }
-    getEvents[type].stateChange.map((change)=>{
-        currentStats[change[0]] += change[1]
-        updateResource(change[0])
-        totalStats[change[0]] != undefined ? totalStats[change[0]] += change[1] : null;
-    })
 }
 
 function doEvent(type) {
@@ -164,57 +81,6 @@ function doEvent(type) {
         })
     }
 }
-
-gameTime = 1000000;
-gameTimeString = "0:00:00:00"
-function doTick() {
-    updateGameTime()
-    gameTime % 10 == 0 ? doTriggers() : null
-    doOneTimeTriggers()
-    gameTime % 10 == 0 ? save() : null
-    populateStats()
-}
-
-function populateStats() {
-    Object.keys(currentStats).map((key)=>{
-        $("#self i." + key).html(currentStats[key])
-    })
-    $("#debug").html("<pre>"+JSON.stringify(totalStats, null, 2)+"</pre>")
-}
-
-function updateGameTime() {
-    gameTime += 2
-    seconds = Math.floor(gameTime / 10)
-    ss = ("0" + seconds % 60).slice(-2)
-    minutes = Math.floor(seconds / 60)
-    mm = ("0" + minutes % 60).slice(-2)
-    hours = Math.floor(minutes / 60)
-    hh = ("0" + hours % 24).slice(-2)
-    days = Math.floor(hours / 24)
-    gameTimeString = days + ":" + hh + ":" + mm + ":" + ss
-}
-
-function save() {
-    localStorage.setItem("currentStats", JSON.stringify(currentStats)),
-    localStorage.setItem("totalStats", JSON.stringify(totalStats)),
-    localStorage.setItem("gameTime", "" + gameTime)
-}
-
-function load() {
-    msgs.info("Game Loading...")
-    if (localStorage.getItem("currentStats") == null) {return}
-    msgs.good("Welcome back!")
-    currentStats = JSON.parse(localStorage.getItem("currentStats"))
-    totalStats = JSON.parse(localStorage.getItem("totalStats"))
-    gameTime = parseInt(localStorage.getItem("gameTime"))
-    updateGameTime();
-}
-
-$(document).ready(()=>{
-    load();
-    setInterval(doTick, 200);
-    $("#reset").click(()=>{reset()})
-})
 
 
 
