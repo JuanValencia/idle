@@ -10,6 +10,14 @@ body {
     user-select:none;
 }
 
+#self .health:before { content: "\2665"; color: red; text-shadow: 0px 0px 3px yellow, 0px 0px 7px white}
+#self .hunger:before { content: "\1F356"; text-shadow: 0px 0px 3px white}
+#self .memory:before { content: "\1F4AD"; color: white; text-shadow: 0px 0px 2px black,0px 0px 7px white}
+#self .thirst:before { content: "\1F335"; color: sandybrown; text-shadow: 0px 0px 2px black,0px 0px 7px white}
+#self .berries:before { content: "\1F352"; color: lightblue; text-shadow: 0px 0px 5px dodgerblue, 0px 0px 7px white }
+#self .rocks:before { content: "\2BCA"; color: grey; text-shadow: 0px 0px 2px black,0px 0px 4px white}
+#self .water:before { content: "\1F4A7"; text-shadow: 0px 0px 2px black,0px 0px 7px white}
+
 #debug pre {
     font-size: .7em;
 }
